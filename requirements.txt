@@ -1,0 +1,11 @@
+streamlit
+python-dotenv
+langchain-google-genai
+langchain-core
+pyttsx3
+SpeechRecognition
+pypdf
+streamlit-mic-recorder
+pytesseract
+Pillow
+langchain-text-splitters
