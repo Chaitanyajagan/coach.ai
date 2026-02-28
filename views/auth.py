@@ -7,9 +7,9 @@ def page_login_signup():
     c1, c2, c3 = st.columns([1, 1.2, 1])
     with c2:
         st.markdown(f"""
-        <div class="glass-card" style="text-align: center;">
-            <h1 style="color: white; margin-bottom: 10px;">Coach.AI</h1>
-            <p style="margin-bottom: 20px;">AI-Powered Technical Interview Simulator</p>
+        <div class="glass-card animate-fade-in" style="text-align: center;">
+            <h1 style="color: var(--heading-color); margin-bottom: 10px;">Coach.AI</h1>
+            <p style="margin-bottom: 20px; color: var(--text-secondary);">AI-Powered Technical Interview Simulator</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -29,13 +29,5 @@ def page_login_signup():
                         st.rerun()
                     else:
                         st.error("Invalid credentials")
-        
-        with tab2:
-            with st.form("signup"):
-                u = st.text_input("Username")
-                p = st.text_input("Password", type="password")
-                if st.form_submit_button("Sign Up"):
-                    if db.create_user(u, p):
-                        st.success("Created! Please login.")
-                    else:
-                        st.error("Taken.")
+
+

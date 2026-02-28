@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -93,18 +94,47 @@ class InterviewCoach:
             })
             
             # Parse JSON
-            # Clean potential markdown code blocks if the model adds them
+            # 1. Clean markdown code blocks
             clean_text = response_text.replace("```json", "").replace("```", "").strip()
             
+            # 2. Attempt to find JSON object structure { ... }
             try:
-                data = json.loads(clean_text)
-                return data
+                start_idx = clean_text.find('{')
+                end_idx = clean_text.rfind('}')
+                
+                if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                    json_str = clean_text[start_idx:end_idx+1]
+                    data = json.loads(json_str)
+                    return data
+                else:
+                    # If no curly braces, assume the whole text is the message (unless it looks like JSON)
+                    pass
             except json.JSONDecodeError:
-                return {
-                    "message": clean_text,
-                    "status": "ongoing",
-                    "score": None
-                }
+                pass
+
+            # 3. Fallback: Regex extraction for "message"
+            # Matches "message": "..." handling escaped quotes
+            # Negative lookbehind (?<!\\) matches a '"' not preceded by '\'
+            match = re.search(r'"message":\s*"(.*?[^\\])"', clean_text, re.DOTALL)
+            if match:
+                fallback_msg = match.group(1)
+                # Decode escaped characters if possible (like \" to ")
+                try:
+                     fallback_msg = bytes(fallback_msg, "utf-8").decode("unicode_escape")
+                except:
+                     pass
+            else:
+                # 4. Ultimate Fallback: Return text but strip JSON skeleton if present
+                fallback_msg = clean_text
+                # If it looks like it tried to be JSON, clean it
+                if "{" in clean_text and "}" in clean_text and '"message":' in clean_text:
+                     fallback_msg = clean_text.replace("{", "").replace("}", "").replace('"message":', "").replace('"', "").strip()
+
+            return {
+                "message": fallback_msg,
+                "status": "ongoing",
+                "score": None
+            }
 
         except Exception as e:
             return {
@@ -112,4 +142,66 @@ class InterviewCoach:
                 "status": "ongoing",
                 "score": None
             }
+
+    def get_ats_score(self, resume_text, job_desc):
+        """
+        Calculates ATS score for the resume against the job description.
+        """
+        if not self.api_key:
+             return {"score": 0, "matched_keywords": [], "missing_keywords": [], "suggestions": "API Key missing."}
+
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            google_api_key=self.api_key,
+            temperature=0.3
+        )
+        
+        template = """
+        You are an expert ATS (Applicant Tracking System).
+        Evaluate the following resume against the job description.
+        
+        Resume:
+        {resume_text}
+        
+        Job Description:
+        {job_desc}
+        
+        IMPORTANT: Respond in valid JSON format ONLY.
+        Structure:
+        {{
+            "score": <integer from 0 to 100 representing the ATS match score>,
+            "matched_keywords": [<list of matching skills/keywords found in both>],
+            "missing_keywords": [<list of important skills/keywords missing from resume>],
+            "suggestions": "<string with a short suggestion to improve the resume>"
+        }}
+        """
+        
+        prompt = PromptTemplate(
+            template=template,
+            input_variables=["job_desc", "resume_text"]
+        )
+        
+        chain = prompt | llm | StrOutputParser()
+        
+        try:
+            response_text = chain.invoke({
+                "job_desc": job_desc if job_desc else "N/A",
+                "resume_text": resume_text if resume_text else "Not provided"
+            })
+            
+            clean_text = response_text.replace("```json", "").replace("```", "").strip()
+            
+            start_idx = clean_text.find('{')
+            end_idx = clean_text.rfind('}')
+            
+            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                json_str = clean_text[start_idx:end_idx+1]
+                data = json.loads(json_str)
+                return data
+            else:
+                return {"score": 0, "matched_keywords": [], "missing_keywords": [], "suggestions": "Could not parse AI response."}
+                
+        except Exception as e:
+            return {"score": 0, "matched_keywords": [], "missing_keywords": [], "suggestions": f"Error evaluating ATS score: {str(e)}"}
+
 

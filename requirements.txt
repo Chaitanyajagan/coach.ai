@@ -9,3 +9,4 @@ streamlit-mic-recorder
 pytesseract
 Pillow
 langchain-text-splitters
+fpdf2

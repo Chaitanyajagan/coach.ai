@@ -2,9 +2,13 @@ import streamlit as st
 import streamlit as st
 
 def render_home_view():
-    st.markdown("<h1 style='text-align: center;'>Dashboard</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #888;'>Configure your interview session</p>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+        <div class="animate-fade-in" style='text-align: center;'>
+            <h1>Dashboard</h1>
+            <p style='color: var(--text-secondary);'>Configure your interview session</p>
+        </div>
+        <br>
+    """, unsafe_allow_html=True)
     
     # Simple Centered Layout
     c1, c2, c3 = st.columns([1, 2, 1])
@@ -47,31 +51,25 @@ def render_home_view():
             """
         }
         
-        selected_role = st.selectbox("🎯 Select Target Role", list(JD_PRESETS.keys()), index=None, placeholder="Choose a position...")
-        
-        if selected_role:
-            job_desc = JD_PRESETS[selected_role]
-            st.success(f"**Selected:** {selected_role}")
-        else:
-            job_desc = None
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # 2. Resume Upload
-        resume_file = st.file_uploader("📂 Upload Resume (PDF or Image)", type=["pdf", "png", "jpg", "jpeg"])
-        if resume_file:
-            st.info("Resume Attached")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        start_btn = st.button("🚀 Start Interview", type="primary", use_container_width=True)
+        with st.form("setup_form"):
+            selected_role = st.selectbox("🎯 Select Target Role", list(JD_PRESETS.keys()), index=None, placeholder="Choose a position...")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # 2. Resume Upload
+            resume_file = st.file_uploader("📂 Upload Resume (PDF or Image)", type=["pdf", "png", "jpg", "jpeg"])
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            start_btn = st.form_submit_button("📊 Evaluate Resume & Start", type="primary", use_container_width=True)
 
         if start_btn:
-            if not job_desc:
+            if not selected_role:
                 st.error("Please select a Job Role.")
             elif not resume_file:
                 st.error("Please upload your Resume.")
             else:
+                job_desc = JD_PRESETS[selected_role]
                 try:
                     # Process Resume using OCR Utils
                     from ocr_utils import process_resume_upload
@@ -84,6 +82,9 @@ def render_home_view():
                     st.toast(f"Resume processed into {len(st.session_state['resume_chunks'])} chunks.")
                     
                     # Store in session
+                    resume_file.seek(0)
+                    st.session_state.interview_data['resume_bytes'] = resume_file.read()
+                    
                     st.session_state.interview_data['role'] = selected_role
                     st.session_state.interview_data['job_desc'] = job_desc
                     st.session_state.interview_data['resume_text'] = resume_text
@@ -93,24 +94,13 @@ def render_home_view():
                     st.session_state['shutup'] = False
                     st.session_state.camera_on = True # Reset camera too
                     
-                    # Generate First Question
-                    with st.spinner("Analyzing Resume & JD..."):
-                        initial = st.session_state.coach.get_response(
-                            role=selected_role,
-                            resume_text=resume_text,
-                            job_desc=job_desc
-                        )
-                        st.session_state.messages.append({"role": "assistant", "content": initial['message']})
-                        
-                        # Generate Audio for Interview View
-                        from utils import text_to_speech_file
-                        audio_bytes = text_to_speech_file(initial['message'])
-                        if audio_bytes:
-                            st.session_state['latest_audio'] = audio_bytes
-                        
-                        # Navigate using dash_view
-                        st.session_state.dash_view = 'interview'
-                        st.rerun()
+                    # Store ats_result reset in case it existed
+                    if 'ats_result' in st.session_state:
+                         del st.session_state['ats_result']
+                         
+                    # Navigate using dash_view
+                    st.session_state.dash_view = 'ats_score'
+                    st.rerun()
                         
                 except Exception as e:
                     st.error(f"Error reading resume: {e}")

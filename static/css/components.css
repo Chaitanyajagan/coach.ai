@@ -1,0 +1,40 @@
+/* Advanced Component Hover States & 3D Transitions */
+
+/* Enhanced Glass Card Hover */
+.glass-card {
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.3s ease !important;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px) scale(1.01) !important;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15), 0 0 20px rgba(var(--accent-rgb, 124, 58, 237), 0.2) !important;
+}
+
+/* Dash Card Hover inside Result View */
+.dash-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.dash-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Enhance standard Button scale */
+div.stButton>button,
+div[data-testid="stFormSubmitButton"]>button,
+button[data-testid="baseButton-secondary"] {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+div.stButton>button:hover:not(:disabled),
+div[data-testid="stFormSubmitButton"]>button:hover:not(:disabled),
+button[data-testid="baseButton-secondary"]:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.03) !important;
+}
+
+/* Interview Microphone Pulse override */
+.mic-recording-active {
+    animation: pulseGlow 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
+    border-color: #ef4444 !important;
+}

@@ -1,0 +1,83 @@
+/* Keyframe Animations */
+
+/* 1. Fade In Up */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 2. Float (Continuous gentle bobbing) */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+/* 3. Pulse Glow (For active recording state) */
+@keyframes pulseGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+/* Animation Utility Classes */
+.animate-fade-in {
+    opacity: 0;
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Staggered Delay Classes */
+.delay-1 {
+    animation-delay: 0.15s;
+}
+
+.delay-2 {
+    animation-delay: 0.3s;
+}
+
+.delay-3 {
+    animation-delay: 0.45s;
+}
+
+.delay-4 {
+    animation-delay: 0.6s;
+}
+
+.delay-5 {
+    animation-delay: 0.75s;
+}
+
+/* Element specific */
+.floating-element {
+    animation: float 4s ease-in-out infinite;
+}
+
+/* Base Horizontal Progress Bar default animation */
+.breakdown-bar {
+    width: 0 !important;
+    /* Start at 0, filled via JS or inline style delay */
+    transition: width 1.5s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}

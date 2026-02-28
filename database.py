@@ -70,6 +70,23 @@ def verify_user(username, password):
         return user['id']
     return None
 
+def get_or_create_oauth_user(username):
+    """Gets an existing user or creates a new one without password for OAuth."""
+    conn = get_db_connection()
+    c = conn.cursor()
+    user = c.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+    if user:
+        conn.close()
+        return user['id']
+    
+    # User does not exist, create them
+    c.execute('INSERT INTO users (username, password) VALUES (?, ?)', 
+              (username, "OAUTH_LOGIN_NO_PASSWORD"))
+    conn.commit()
+    user_id = c.lastrowid
+    conn.close()
+    return user_id
+
 def save_interview(user_id, role, messages, final_score, verdict):
     """Save a completed interview."""
     conn = get_db_connection()
